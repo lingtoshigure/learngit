@@ -216,11 +216,15 @@ class stock:
         
 #tag_all存放所有的标签信息
 tag_all=[]
-f=open('tag.json','r')
-for line in f.readlines():
-    dic=json.loads(line)
-    tag_all.append(dic)
-f.close()
+if os.path.exists("tag.json")==False:
+    f=open('tag.json','w')
+    f.close()
+else:
+    f=open('tag.json','r')
+    for line in f.readlines():
+        dic=json.loads(line)
+        tag_all.append(dic)
+    f.close()
 
 
 
@@ -250,8 +254,11 @@ comment=[]
  #评论下标,双击主界面某一评论时，更新该值
 global comment_detail_index
 
-#存放统计数据的选项统计信息
+
 data_label=[]
+
+#存放统计数据的选项统计信息
+data_list=[]
 
 
 if os.path.exists("statistics.json")==False:
@@ -262,20 +269,18 @@ else:
     for line in f.readlines():
         dic=json.loads(line)
     
-        for key in dic:
-            if key!='tag':
-                dic[key]=0
-        data_label.append(dic)
+      
+        data_list.append(dic)
     f.close()
 
-for item in data_label:
+for item in data_list:
     print(item)
 
 #存放已经标记的评论
 labeled_comment=[]
 
 if os.path.exists("labeled_comment.json")==False:
-    f=open('labeled_comment,json','w')
+    f=open('labeled_comment.json','w')
     f.close()
 else:
     f=open('labeled_comment.json','r')
@@ -413,7 +418,7 @@ def download():
 #用listbox存选项
 #用循环画多个扇形
 #统计图中读出的数据格式
-data_list=[{'tag':'是否为推广贴','是':'50','否':'60'},{'tag':'评论情感色彩','积极':'70','消极':'100','中立':'20'},{'tag':'是否与股票相关','是':'50','否':'44'}]
+#data_list=[{'tag':'是否为推广贴','是':'50','否':'60'},{'tag':'评论情感色彩','积极':'70','消极':'100','中立':'20'},{'tag':'是否与股票相关','是':'50','否':'44'}]
 
 #扇形填充颜色
 data_color=['red','blue','yellow','green','purple','orange','white','black']
@@ -429,8 +434,13 @@ def show_chart(event,canvas_chart,data_label,data_listbox):
     
     #统计标签选项总数
     count_sum=0
+    for item in data_list:
+        print(item)
+        
     for key in data_list[index]:
         if key!='tag':
+            print('key:',key)
+            
             count_sum=count_sum+int(data_list[index][key])
     print('sum:',count_sum)       
     #绘制扇形
@@ -441,18 +451,16 @@ def show_chart(event,canvas_chart,data_label,data_listbox):
     
     for key in data_list[index]:
         if key!='tag':
-            canvas_chart.create_arc(250,250,50,50,start=init_arc,extent=int(data_list[index][key])/count_sum*360,fill=data_color[i])
-            init_arc=init_arc+int(data_list[index][key])/count_sum*360
-            data_tmp=key+'  '+data_color[i]+'  '+str(int(int(data_list[index][key])/count_sum*100))+'%'
-            data_listbox.insert(END,data_tmp)
-            i=i+1
+            if count_sum!=0:
+                canvas_chart.create_arc(250,250,50,50,start=init_arc,extent=int(data_list[index][key])/count_sum*360,fill=data_color[i])
+                init_arc=init_arc+int(data_list[index][key])/count_sum*360
+                data_tmp=key+'  '+data_color[i]+'  '+str(int(int(data_list[index][key])/count_sum*100))+'%'
+                data_listbox.insert(END,data_tmp)
+                i=i+1
     
     
-        
     
-
-
-    
+#data_label是下拉框，在下拉框中选择标签后生成统计图和相关信息  
 def datachart():
     cwin=Tk()
     cwin.title("统计图")
@@ -549,7 +557,6 @@ def create_confirm(event,tag_tmp,new_label,data_label,tag_all,tag_listbox):
     f=open("tag.json","a")
     #确认后将新的标签信息写回到listbox中
     
-   
     tag_tmp=json.dumps(tag_tmp,ensure_ascii=False)
     f.writelines(tag_tmp)
     f.write('\n')
@@ -558,10 +565,11 @@ def create_confirm(event,tag_tmp,new_label,data_label,tag_all,tag_listbox):
     #将标签写入到统计数据中
     #要先将统计数据中是选项计数清零，加入新的标签后再写回文件中
    
-    data_label.append(new_label)
+    data_list.append(new_label)
+    
     
     f=open('statistics.json','w')
-    for item in data_label:
+    for item in data_list:
         print(item)
         item=json.dumps(item,ensure_ascii=False)
         f.writelines(item)
@@ -910,7 +918,7 @@ def select(v,index,tag_all,unlabeled_index,unlabeled_comment_list):
 #确认对评论的标注,将已经标注的文件写入到labeled_comment.json中
 #要将xueqiu_comment中对应评论的tag改为1,写回到xueqiu_comment中
 #统计图数据中对应标签的选项计数递增,点击确认后写回到统计图数据文件中
-def b_confirm(event,unlabeled_index,unlabeled_comment_list):
+def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list):
     f=open('labeled_comment.json','a')
     #问题：选项的值没有更新
     tmp=unlabeled_comment_list[unlabeled_index[0]].__dict__
@@ -920,6 +928,32 @@ def b_confirm(event,unlabeled_index,unlabeled_comment_list):
     
     f.close()
     #更新xueqiu_comment中tag的值
+    #遍历所有标签，得到被选中的选项
+    #这里还是有问题，只是识别了相同的选项，但是不同的标签可能拥有相同的选项
+    #应该判断是相同的label后再识别选项
+    for item in unlabeled_comment_list[unlabeled_index[0]].label_list:
+        for key in item:
+            if key!='tag'and key!='choice':
+                if item[key]==item['choice']:
+                    for tmp in data_list:
+                        if tmp['tag']==item['tag']:
+                            for tmp_key in tmp:
+                                if tmp_key==key:
+                                    tmp[tmp_key]=str(int(tmp[tmp_key])+1)
+                       
+    
+    for item in data_list:
+        print(item)
+        
+    #将更新后的data_list写回statistics.json中
+    f=open('statistics.json','w')
+    for item in data_list:
+         item=json.dumps(item,ensure_ascii=False)
+         f.writelines(item)
+         f.write('\n')
+    f.close()
+        
+        
     
 
 #对标签的选项进行选择
@@ -1012,7 +1046,7 @@ def unlabeled_comment():
     #点击确认后将评论信息写入到已标注文件中，同时需要更新统计图中的选项对应的计数
     tag_confirm_button=Button(fm_confirm,text='确认')
     tag_confirm_button.place(x=230,y=0)
-    tag_confirm_button.bind('<Button-1>',lambda event:b_confirm(event,unlabeled_index,unlabeled_comment_list))
+    tag_confirm_button.bind('<Button-1>',lambda event:b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list))
     
     pre=Button(fm_page,text='上一条',command=lambda:pre_unlabeled_comment(unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
     pre.place(x=5,y=0)

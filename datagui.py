@@ -195,6 +195,7 @@ import ast
 import logging
 import json
 import os
+import copy
 
 #设置日志格式
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -235,6 +236,7 @@ comment_all=[]
 f=open('xueqiu_comment.json','r')
 for line in f.readlines():
     comment_dict=ast.literal_eval(line)
+    
     tmp=stock()
     tmp.comment_text=comment_dict['comment_text']
     for item in tag_all:
@@ -887,9 +889,16 @@ def finished_comment():
 #未标注评论
 
 
+
 #查看上一条未来标注评论
-def pre_unlabeled_comment(unlabeled_index,unlabeled_comment_list,text):
+#标签和按钮重新布局
+def pre_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,text):
+    for widget in fm_choice.winfo_children():
+        widget.grid_forget()
+    
+     
     unlabeled_index[0]=unlabeled_index[0]-1
+    print("评论下标",unlabeled_index[0])
     if unlabeled_index[0]<0:
         unlabeled_index[0]=0
         messagebox.showinfo('提示','已经是第一条评论了')
@@ -897,9 +906,16 @@ def pre_unlabeled_comment(unlabeled_index,unlabeled_comment_list,text):
     text.insert('end',unlabeled_comment_list[unlabeled_index[0]].comment_text)
         
 #查看下一条未标注评论
-def nxt_unlabeled_comment(unlabeled_index,unlabeled_comment_list,text):
-    unlabeled_index[0]=unlabeled_index[0]+1
+#标签和按钮重新布局
+#选项的选择信息没有用的是上一条
+
+def nxt_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,text):
+    for widget in fm_choice.winfo_children():
+        widget.grid_forget()
     
+   
+    unlabeled_index[0]=unlabeled_index[0]+1
+    print("评论下标:",unlabeled_index[0])
     if unlabeled_index[0]>=len(unlabeled_comment_list):
         unlabeled_index[0]=len(unlabeled_comment_list)-1
         messagebox.showinfo('提示','已经是最后一条评论了')
@@ -909,8 +925,9 @@ def nxt_unlabeled_comment(unlabeled_index,unlabeled_comment_list,text):
 
 #记录对选项的选择
 #传入一个stock结构体，记录当前的选择
-def select(v,index,tag_all,unlabeled_index,unlabeled_comment_list):
+def select(v,index,unlabeled_index,unlabeled_comment_list):
     print('select:',v.get())
+    print(len(unlabeled_comment_list))
     unlabeled_comment_list[unlabeled_index[0]].label_list[index]['choice']=v.get()
     
     print('tag:',unlabeled_comment_list[unlabeled_index[0]].label_list[index])
@@ -948,8 +965,8 @@ def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all):
         tmp['comment_text']=item['comment_text']
         tmp['tag']=item['tag']
        
-        comment_tmp=json.dumps(tmp,ensure_ascii=False)
-        f.write(comment_tmp)
+       
+        f.write(str(tmp))
         f.write('\n')
     f.close()
     
@@ -988,9 +1005,8 @@ def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all):
 
 def label_choice(even,fm_choice,label_list,tag_all,unlabeled_index,unlabeled_comment_list):
     #隐藏没有选定的标签的选项
-    unlabeled_comment_list[unlabeled_index[0]].label_list=tag_all
-    print(unlabeled_comment_list[unlabeled_index[0]].comment_text)
-    print(unlabeled_comment_list[unlabeled_index[0]].label_list)
+    
+    
     
     
     for widget in fm_choice.winfo_children():
@@ -1001,13 +1017,28 @@ def label_choice(even,fm_choice,label_list,tag_all,unlabeled_index,unlabeled_com
     global v
     v=IntVar()
     #设置选项的默认值
-    v.set(tag_all[index]['choice'])
-    print(v.get())
+    
+    #v.set(tag_all[index]['choice'])
+    #为什么v的值没有更新？
+    
+    v.set(unlabeled_comment_list[unlabeled_index[0]].label_list[index]['choice'])
+    print("v:",v.get())
+    print("当前评论默认选项:",unlabeled_comment_list[unlabeled_index[0]].label_list[index]['choice'])
+    print("当前评论默认选项:",unlabeled_comment_list[unlabeled_index[0]].label_list[index]['choice'])
+
+    #评论下标更新，但是按钮选项没有更新
+    print("当前评论下标",unlabeled_index[0])
+    
+  
+    
     
     #根据标签选项生成按钮
-    for key in tag_all[index]:
+    #为什么看起来像共用了一个label_list?
+    for key in unlabeled_comment_list[unlabeled_index[0]].label_list[index]:
         if key!='tag'and key!='choice':
-            b=Radiobutton(fm_choice,text=key,variable=v,value=tag_all[index][key],command=lambda:select(v,index,tag_all,unlabeled_index,unlabeled_comment_list))
+           
+            b=Radiobutton(fm_choice,text=key,variable=v,value=unlabeled_comment_list[unlabeled_index[0]].label_list[index][key],command=lambda:select(v,index,unlabeled_index,unlabeled_comment_list))
+           
             b.grid(row=0,column=i)
             i=i+1
             
@@ -1023,6 +1054,7 @@ def unlabeled_comment():
     unlabeled_comment_win['menu']=unlabeled_menu
     
     #评论下标
+    
     unlabeled_index=[]
     unlabeled_index.append(0)
     #数据不会在这里更新
@@ -1034,6 +1066,10 @@ def unlabeled_comment():
     unlabeled_comment_list=[]
     for item in comment_all:
         if item.tag=='0':
+            #这里用了浅拷贝，应该使用深拷贝
+            #item.label_list=tag_all;
+            item.label_list=copy.deepcopy(tag_all)
+            #标签正常导入
             unlabeled_comment_list.append(item)
     
     print("评论长度:",len(unlabeled_comment_list))
@@ -1076,10 +1112,10 @@ def unlabeled_comment():
     tag_confirm_button.place(x=230,y=0)
     tag_confirm_button.bind('<Button-1>',lambda event:b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all))
     
-    pre=Button(fm_page,text='上一条',command=lambda:pre_unlabeled_comment(unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
+    pre=Button(fm_page,text='上一条',command=lambda:pre_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
     pre.place(x=5,y=0)
     
-    nxt=Button(fm_page,text='下一条',command=lambda:nxt_unlabeled_comment(unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
+    nxt=Button(fm_page,text='下一条',command=lambda :nxt_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
     nxt.place(x=450,y=0)
     
     unlabeled_comment_win.mainloop()

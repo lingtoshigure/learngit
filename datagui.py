@@ -228,7 +228,7 @@ else:
 
 
 
-#comment_all存放所有的评论信息(评论,标签，标志位)
+#comment_all从xueqiu_comment文件中读取数据，存放所有的评论信息(评论,标签，标志位)
 #comment_all存放stock结构体
 comment_all=[]
 
@@ -918,7 +918,7 @@ def select(v,index,tag_all,unlabeled_index,unlabeled_comment_list):
 #确认对评论的标注,将已经标注的文件写入到labeled_comment.json中
 #要将xueqiu_comment中对应评论的tag改为1,写回到xueqiu_comment中
 #统计图数据中对应标签的选项计数递增,点击确认后写回到统计图数据文件中
-def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list):
+def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all):
     f=open('labeled_comment.json','a')
     #问题：选项的值没有更新
     tmp=unlabeled_comment_list[unlabeled_index[0]].__dict__
@@ -928,6 +928,34 @@ def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list):
     
     f.close()
     #更新xueqiu_comment中tag的值
+    #找到对应的评论
+    
+    #stock object is not iterable
+    print(unlabeled_comment_list[unlabeled_index[0]].comment_text)
+    print(unlabeled_comment_list[unlabeled_index[0]].tag)
+        
+    for item in comment_all:
+        if item.comment_text==unlabeled_comment_list[unlabeled_index[0]].comment_text:
+            item.tag=1
+    
+    
+    #更新xueqiu_comment
+    
+    f=open('xueqiu_comment.json','w')
+    for item in comment_all:
+        tmp={}
+        item=item.__dict__
+        tmp['comment_text']=item['comment_text']
+        tmp['tag']=item['tag']
+       
+        comment_tmp=json.dumps(tmp,ensure_ascii=False)
+        f.write(comment_tmp)
+        f.write('\n')
+    f.close()
+    
+        
+        
+    
     #遍历所有标签，得到被选中的选项
     #这里还是有问题，只是识别了相同的选项，但是不同的标签可能拥有相同的选项
     #应该判断是相同的label后再识别选项
@@ -1046,7 +1074,7 @@ def unlabeled_comment():
     #点击确认后将评论信息写入到已标注文件中，同时需要更新统计图中的选项对应的计数
     tag_confirm_button=Button(fm_confirm,text='确认')
     tag_confirm_button.place(x=230,y=0)
-    tag_confirm_button.bind('<Button-1>',lambda event:b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list))
+    tag_confirm_button.bind('<Button-1>',lambda event:b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all))
     
     pre=Button(fm_page,text='上一条',command=lambda:pre_unlabeled_comment(unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
     pre.place(x=5,y=0)

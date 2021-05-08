@@ -510,7 +510,7 @@ def tag_delete(tag_listbox):
         f.close()
         
         #在标签管理类中删除标签后也要在统计图文件中删除对应的标签
-        #删除对应的标签后tag_all和comment和comment_all都要更新，重新从文件中读取数据
+        #统计图中是否需要删除标签?
     
    
 
@@ -735,19 +735,51 @@ def main_delete_multiple():
     index.sort(reverse=True)
     #print(index)
     
+    #删除提示
+    value=askokcancel('提示','确认删除?')
+    if value==True:
+          for item in index:
+              logging.info("删除评论索引")
+              comment_list.delete(item)
+          #根据tag删除评论
+          #xueqiu_comment能正常删除，但是labeled_comment不能正常删除
+          for item in index:
+              logging.info("删除评论")
+              print("删除评论comment:",comment[item])
+              print("删除评论comment_all:",comment_all[item].comment_text)
+              del comment[item]
+              if comment_all[item].tag==1:
+                 for comment_tmp in labeled_comment:
+                     if comment_tmp.comment_text==comment_all[item].comment_text:
+                         print(comment_tmp.comment_text)
+                         del comment_tmp
+                         print("删除",comment_tmp)
+                         del comment_all[item]
+                         print("删除",comment_all[item])
+              else:
+                  del comment_all[item]
+                  print("删除",comment_all[item])
+          
+          f=open('xueqiu_comment.json','w')
+          
+          for item in comment_all:
+              tmp={}
+              item=item.__dict__
+              tmp['comment_text']=item['comment_text']
+              tmp['tag']=item['tag']
+              f.write(str(tmp))
+              f.write('\n')
+          f.close()
+          
+          f=open('labeled_comment.json','w')
+          for item in labeled_comment:
+              tmp=item.__dict__
+              comment_tmp=json.dumps(tmp,ensure_ascii=False)
+              f.write(comment_tmp)
+              f.write('\n')
+          f.close()
     
-    for item in index:
-        logging.info("删除评论索引",item)
-        comment_list.delete(item)
-    for item in index:
-        logging.info("删除评论",comment[item])
-        del comment[item]
-        
-    #print(comment)
 
-    
-    
-    #最后将更新后的comment覆盖原来的保存文件
     
 #使用3个frame划分布局
 #上半部分放text显示评论，下半部分放评论标签,最底放两个按钮
@@ -937,7 +969,7 @@ def select(v,index,unlabeled_index,unlabeled_comment_list):
 #统计图数据中对应标签的选项计数递增,点击确认后写回到统计图数据文件中
 def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all):
     f=open('labeled_comment.json','a')
-    #问题：选项的值没有更新
+    
     tmp=unlabeled_comment_list[unlabeled_index[0]].__dict__
     comment_tmp=json.dumps(tmp,ensure_ascii=False)
     f.write(comment_tmp)
@@ -964,8 +996,6 @@ def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all):
         item=item.__dict__
         tmp['comment_text']=item['comment_text']
         tmp['tag']=item['tag']
-       
-       
         f.write(str(tmp))
         f.write('\n')
     f.close()
@@ -998,17 +1028,9 @@ def b_confirm(event,unlabeled_index,unlabeled_comment_list,data_list,tag_all):
          f.write('\n')
     f.close()
         
-        
-    
-
 #对标签的选项进行选择
-
 def label_choice(even,fm_choice,label_list,tag_all,unlabeled_index,unlabeled_comment_list):
     #隐藏没有选定的标签的选项
-    
-    
-    
-    
     for widget in fm_choice.winfo_children():
         widget.grid_forget()
         
@@ -1024,16 +1046,9 @@ def label_choice(even,fm_choice,label_list,tag_all,unlabeled_index,unlabeled_com
     v.set(unlabeled_comment_list[unlabeled_index[0]].label_list[index]['choice'])
     print("v:",v.get())
     print("当前评论默认选项:",unlabeled_comment_list[unlabeled_index[0]].label_list[index]['choice'])
-    print("当前评论默认选项:",unlabeled_comment_list[unlabeled_index[0]].label_list[index]['choice'])
-
-    #评论下标更新，但是按钮选项没有更新
-    print("当前评论下标",unlabeled_index[0])
-    
-  
-    
     
     #根据标签选项生成按钮
-    #为什么看起来像共用了一个label_list?
+   
     for key in unlabeled_comment_list[unlabeled_index[0]].label_list[index]:
         if key!='tag'and key!='choice':
            
@@ -1041,16 +1056,59 @@ def label_choice(even,fm_choice,label_list,tag_all,unlabeled_index,unlabeled_com
            
             b.grid(row=0,column=i)
             i=i+1
-            
-            
-def unlabeled_comment():
+
+#提示是否确认删除
+#先调用nxt_unlabeled_comment转到下一条评论再删除评论           
+
+def unlabeled_comment_delete(fm_choice,comment_list,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text):
+     value=askokcancel('提示','确认删除?')
+     if value==True:
+         nxt_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text)
+         print("unlabeled_index:",unlabeled_index[0])
+         print("当前评论:",unlabeled_comment_list[unlabeled_index[0]].comment_text)
+         print("删除评论:",unlabeled_comment_list[unlabeled_index[0]-1].comment_text)
+        
+         #删除评论comment和comment_all
+        
+         
+         for index in range(0,len(comment_all)-1):
+             if comment_all[index].comment_text==unlabeled_comment_list[unlabeled_index[0]-1].comment_text:
+                 break;
+         #主界面评论没有被删除
+         print("index:",index)
+         print("comment删除:",comment[index])
+         print("comment_all删除:",comment_all[index].comment_text)
+         print("listbox删除:",comment_list.get(index))
+         #判断listbox不为空
+         comment_list.delete(index)
+         del unlabeled_comment_list[unlabeled_index[0]-1]
+         del comment[index]
+         del comment_all[index]
+         
+         #更新xueqiu_comment
+         f=open('xueqiu_comment.json','w')
+         for item in comment_all:
+             tmp={}
+             item=item.__dict__
+             tmp['comment_text']=item['comment_text']
+             tmp['tag']=item['tag']
+             f.write(str(tmp))
+             f.write('\n')
+         f.close()
+         
+         
+         
+    
+         
+    
+def unlabeled_comment(comment_list):
     unlabeled_comment_win=Toplevel()
     unlabeled_comment_win.geometry("500x470")
     unlabeled_comment_win.title('未标注评论')
+    
     unlabeled_menu=Menu(unlabeled_comment_win)
-    unlabeled_menu.add_command(label='添加标签')
-    unlabeled_menu.add_command(label='删除标签')
-    unlabeled_menu.add_command(label='删除评论')
+  
+    unlabeled_menu.add_command(label='删除评论',command=lambda :unlabeled_comment_delete(fm_choice,comment_list,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
     unlabeled_comment_win['menu']=unlabeled_menu
     
     #评论下标
@@ -1094,7 +1152,7 @@ def unlabeled_comment():
     fm_confirm.place(x=0,y=400)
     fm_page.place(x=0,y=435)
     
-    unlabeled_comment_text=Text(fm_text,width=72,height=15)
+    unlabeled_comment_text=Text(fm_text,width=70,height=15)
     unlabeled_comment_text.grid(row=0,column=0)
     print(unlabeled_comment_list[0].comment_text)
     unlabeled_comment_text.insert('end',str(unlabeled_comment_list[0].comment_text))
@@ -1118,7 +1176,15 @@ def unlabeled_comment():
     nxt=Button(fm_page,text='下一条',command=lambda :nxt_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
     nxt.place(x=450,y=0)
     
+    
     unlabeled_comment_win.mainloop()
+
+def labeled_comment(comment_list):
+    
+
+
+
+
        
 root=Tk()
 root.title("数据标注软件")
@@ -1139,7 +1205,7 @@ dmenu.add_command(label='生成统计图',command=datachart)
 dmenu.add_command(label='添加标注')
 dmenu.add_command(label='删除评论',command=main_delete_multiple)
 dmenu.add_command(label='已标注评论',command=finished_comment)
-dmenu.add_command(label='未标注评论',command=unlabeled_comment)
+dmenu.add_command(label='未标注评论',command=lambda:unlabeled_comment(comment_list))
 
 
 menubar.add_cascade(label='文件',menu=fmenu)

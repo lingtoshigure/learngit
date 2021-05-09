@@ -6,186 +6,7 @@ Created on Thu Apr 15 22:39:37 2021
 """
 
 
-"""
-button
-b1=button(windows,text,command)
-command绑定事件
 
-创建一个新窗口
-win=tkinter.Tk() 创建窗口
-win.geometry("600x400"+300+200) 设置窗口的位置及大小
-win.mainloop() 进入消息循环
-
-布局
-pack(pack先依照side命令进行排布，再按照anchor进行对齐)
-相关参数
-side:组件的排布方式
-left,right,top,buttom
-
-anchor 组件的对齐方式
-n(上边),s(下边)，w(左边)，e(右边),nw(左上角),ne(右上角),sw(左下角),se(右下角),center(中心)
-ipadx x方向的内边距  ipady y方向的外边距
-padx x方向的外边距  pady y方向的外边距
-
-label参数
-label(master,option...)
-
-master：框架的父容器
-bg:标签背景色
-cursor，鼠标移动到标签时，光标的形状(可设置为arrow,circle,cross,plus)
-front 设置字体
-text 设置文本
-width 设置标签的宽度
-height 标签的高度
-padx x轴间距
-pady y轴间距
-fill x 横向填充 y 纵向填充  both 横向和纵向都填充
-
-place()布局
-anchor定义控件在窗体内的方位
-in 此选项定义控件相对于参考控件的位置
-x 定义控件的绝对水平位置
-y 定义控件的绝对垂直位置
-(x,y)即为距离窗体左上角的坐标
-
-grid()布局
-
-输入框
-Entry
-
-如果设置菜单选项的大小?
-
-add_command
-add_commnd添加菜单项
-如果该菜单是顶层菜单，则添加的菜单以此向右添加
-如果该菜单是顶层菜单的一个菜单项，则添加的是下拉菜单
-
-add_command参数
-label 指定菜单项的名称
-command  指定被点击时调用的方法
-acceletor 指定快捷键
-underline  指定是否有下划线
-
-add_cascade 添加子菜单
-add_cascade的作用是为了引出后面的菜单
-
-add_cascade参数
-menu  指定把某个菜单级联到该菜单项上
-label  指定该菜单项的名称
-
-控件的command参数要通过 command=lambda:的形式传参数
-调用window.quit退出窗口
-
-弹出菜单 Menu中的post方法，接受两个参数，即x和y坐标，会在相应的位置弹出菜单
-
-canvas create_arc绘制扇形
-create_arc参数
-canvas.create_arc(coord,start,extent,fill)
-
-coord元组设置矩形所形成的椭圆的左上角坐标及右下角坐标:
-coord=x1,y1,x2,y2
-
-start 从x轴正方向(起始方向)开始，单位未度进行绘制，start为起始绘制角度的设置
-extent：以start参数作为参考，以start参数给定的角度开始，逆时针延伸角度，这个角度为extent设置的值
-fill：设施绘制区域的填充颜色 fill="red"
-
-create_text  画布上添加文字信息
-create_text(x,y,text) x,y为文字信息的坐标
-
-定义了画布后，图形的起始和结束坐标是相对与画布的，而不是相对于窗体
-
-scrollbar滚动条
-scrollbar(master,option)
-
-orient 指定绘制"horizontal"(垂直滚动条) "vertical"(水平滚动条)
-
-
-下拉框 combobox
-current()获取当前所选元素的索引，get()方法获取元素本身
-current(index)可以设置下拉框的默认值
-
-
-
-radiobutton 单选按钮
-单选按钮组件用于实现多选一的问题，每一个单选按钮都可以与以一个python的函数或方法与之相关联
-当按钮按下的时，对应的函数或方法将被自动执行
-每一组单选按钮组件应该只与一个变量相关联，然后每一个按钮表示该变量的单一值
-
-参数
-radiobutton(master,options)
-
-组件选项：
-command 指定该按钮相关联的函数或方法
-value 1 标志该单选按钮的值 2 在同一组中的所有按钮应该拥有各不相同的值  
-      3 通过将该值与variable选项的值对比，即可判断用户选中了哪个按钮
-
-variable 1 同一组件中的所有按钮的variable选项应该都指向同一个变量
-         2 通过该变量与value选项的值对比，即可判断用户选中了哪个按钮
-         用于跟踪用户的选择，在所有radiobutton之间共享
-
-单选按钮方法
-deselect() 取消该按钮的选中状态
-select() 将按钮设置为选中状态
-
-message box
-确认/取消对话框 askokcancel 
-askokcancel(title,message,**options)
-askokcancel返回布尔类型，点击确认返回true,点击取消返回false
-
-鼠标事件
-<Button-1> 鼠标左键
-<Double-Button-1> 双击鼠标左键
-
-listbox相关方法
-curselection()
-返回一个元组，包含被选中的选项的序号(从0开始)
-
-delete(first,last=None)
-删除参数first到last范围内(包含first和last)的所有选项
-如果忽略last参数，表示删除first参数指定的选项
-
-get(first,last=None)
-返回一个元组，包含参数first到last范围内的所有选项的文本
-
-python对可变对象(list,dict,set)采用引用传递的方式，对不可变对象(number,string,tuple)等，采用值传递
-要在函数内修改外部的不可变对象，可以将其定义为全局对象(global)
-
-批量删除
-curselection()在多选模式下，返回一个元组，元组中是选定元素的下标，用户先进行选择，选择完后点击删除
-获取curselection()返回的元组，逐个读出元组中的元素delete
-
-
-正则表达式
-.可以匹配除换行符之外的任何字符
-*匹配前面的字符0次或多次
-
-特殊字符: \.^$?+*{}[]()|
-使用以上特殊字符的字面值，必须使用\进行转义
-
-re.sub(x,s,m)
-返回一个字符串，每个匹配的地方用x进行替换，返回替换后的字符串最多替换m次
-
-文件读写
-a :打开一个文件用于追加，如果该文件已存在，文件指针将会放在文件的结尾，即新的内容将会被写入到已有内容之后
-如果该文件不存在，创建新文件进行写入
-
-类：
-class A:
-    def __init__(self)
-
-_init_()方法为类的构造函数方法，创建这个类的实例时就会调用该方法
-
-self代表类的实例，self在定义类的方法时是必须有的，在调用时，不需要传入相应的参数
-类的方法与普通函数只有一个特别的区别，它们必须有一个额外的第一个参数名称，按照惯例名是self
-
-if __name__=='__main__'(双下划线):的作用
-一个python文件通常有两种使用方法,第一是作为脚本直接执行，第二是import到其他的python脚本中被调用
-if _name_=='main'下的代码只有在第一种情况下(即文件作为脚本直接执行)才会被执行，而import到其他脚本中是不会被执行的
-
-写测试的时候，要将主界面放在__name__=='__main__'下，这样不会弹出主界面
-
-如果要使用函数修改不变量，可以将要修改的值用列表存储，然后向函数传递列表
-"""
 from tkinter import*
 from tkinter import ttk
 from tkinter.filedialog import*
@@ -196,6 +17,8 @@ import logging
 import json
 import os
 import copy
+import time
+import get_xueqiu
 
 #设置日志格式
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -407,18 +230,30 @@ def downloadMessage3(nwin):
     msg.grid(row=2)
     
 #下载管理
+def increment(dwin,download_progress):
+    for i in range(100):
+        download_progress["value"]=i+1
+        dwin.update()
+        time.sleep(0.1)
+        
 def download():
     dwin=Tk()
     dwin.title("下载管理")
-    dwin.geometry("400x200")
-    label1=Label(dwin,text="股票代码")
-    info1=Entry(dwin,font=('Arial',14))
-    label1.grid(row=0,column=0)
-    info1.grid(row=0,column=1)
-    begin=Button(dwin,text="开始下载",command=lambda:downloadMessage1(dwin))
-    begin.grid(row=1,column=0,padx=50,pady=50)
-    end=Button(dwin,text="停止下载",command=lambda:downloadMessage2(dwin))
-    end.grid(row=1,column=1,pady=50)
+    dwin.geometry("400x250")
+    label_download=Label(dwin,text="股票代码")
+    stock_info=Entry(dwin,font=('Arial',14))
+    
+    label_download.place(x=40,y=10)
+    stock_info.place(x=100,y=10)
+    start_download=Button(dwin,text="开始下载",command=lambda:increment(dwin,download_progress))
+    start_download.place(x=50,y=100)
+    stop_download=Button(dwin,text="停止下载",command=lambda:downloadMessage2(dwin))
+    stop_download.place(x=300,y=100)
+    
+    download_progress=ttk.Progressbar(dwin,length=200,mode="determinate",orient=HORIZONTAL)
+    download_progress.place(x=100,y=150)
+    
+    
     
     dwin.mainloop()
     
@@ -1006,13 +841,13 @@ def label_choice(even,fm_choice,label_list,tag_all,unlabeled_index,unlabeled_com
             b.grid(row=0,column=i)
             i=i+1
 
-#提示是否确认删除
-#先调用nxt_unlabeled_comment转到下一条评论再删除评论           
+#提示是否删除
+#转跳到下一条评论再删除
 
-def unlabeled_comment_delete(fm_choice,comment_list,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text):
+def unlabeled_comment_delete(fm_choice,comment_list,unlabeled_index,unlabeled_comment_list,labeled_comment_text):
      value=askokcancel('提示','确认删除?')
      if value==True:
-         nxt_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text)
+         nxt_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,labeled_comment_text)
          print("unlabeled_index:",unlabeled_index[0])
          print("当前评论:",unlabeled_comment_list[unlabeled_index[0]].comment_text)
          print("删除评论:",unlabeled_comment_list[unlabeled_index[0]-1].comment_text)
@@ -1050,10 +885,6 @@ def unlabeled_comment_delete(fm_choice,comment_list,unlabeled_index,unlabeled_co
              f.write('\n')
          f.close()
          
-         
-         
-         
-    
          
     
 def unlabeled_comment(comment_list):
@@ -1282,16 +1113,64 @@ def labeled_change_confirm(event,labeled_index,labeled_comment,data_list,old_lab
 def labeled_comment_delete(fm_choice,comment_list,labeled_index,labeled_comment,labeled_comment_text,old_labeled_choice):
     value=askokcancel('提示','确认删除?')
     if value==True:
-        labeled_nxt_comment(fm_choice, labeled_index, labeled_comment, labeled_comment_text, old_labeled_choice)
+         nxt_unlabeled_comment(fm_choice,labeled_index,labeled_comment,labeled_comment_text)
+         print("labeled_index:",labeled_index[0])
+         print("当前评论:",labeled_comment[labeled_index[0]].comment_text)
+         print("删除评论:",labeled_comment[labeled_index[0]-1].comment_text)
+        
+         #删除评论comment和comment_all
+        
+         
+         for index in range(0,len(comment_all)):
+             if comment_all[index].comment_text==labeled_comment[labeled_index[0]-1].comment_text:
+                 break;
+         #主界面评论没有被删除
+         print("index:",index)
+         
+         print("comment_all删除:",comment_all[index].comment_text)
+         print("listbox删除:",comment_list.get(index))
+         #判断listbox不为空
+         print("is_import_file:",is_import_file)
+         if is_import_file==True:
+             comment_list.delete(index)
+             del comment[index]
+        
+         del labeled_comment[labeled_index[0]-1]
+        
+         del comment_all[index]
+         
+         #更新xueqiu_comment
+         f=open('xueqiu_comment.json','w')
+         for item in comment_all:
+             tmp={}
+             item=item.__dict__
+             tmp['comment_text']=item['comment_text']
+             tmp['tag']=item['tag']
+             f.write(str(tmp))
+             f.write('\n')
+         f.close()
+         
+         #更新labeled_comment
+         f=open('labeled_comment.json','w')
+         for item in labeled_comment:
+             tmp={}
+             item=item.__dict__
+             comment_tmp=json.dumps(item,ensure_ascii=False)
+             f.write(comment_tmp)
+             f.write('\n')
+         f.close()
+         
+    
 
 def labeled_comment_f(comment_list,tag_all,labeled_comment):
-    labeled_comment_win=Toplevel()
+    labeled_comment_win=Tk()
+    
     labeled_comment_win.geometry("500x470")
     labeled_comment_win.title('已标注评论')
     
     labeled_menu=Menu(labeled_comment_win)
   
-    labeled_menu.add_command(label='删除评论',command=lambda :unlabeled_comment_delete(fm_choice,comment_list,unlabeled_index,unlabeled_comment_list,unlabeled_comment_text))
+    labeled_menu.add_command(label='删除评论',command=lambda :labeled_comment_delete(fm_choice,comment_list,labeled_index,labeled_comment,labeled_comment_text,old_labeled_choice))
     labeled_comment_win['menu']=labeled_menu
     
     #已标注评论下标,为什么类型是dict?
@@ -1318,10 +1197,6 @@ def labeled_comment_f(comment_list,tag_all,labeled_comment):
     
     for item in old_labeled_choice:
         print(item)
-    
-   
-    
-   
     
     tag_name=[]
     for item in tag_all:

@@ -18,7 +18,9 @@ import json
 import os
 import copy
 import time
-import get_xueqiu
+import threading
+from get_xueqiu import Xueqiuspider
+
 
 #设置日志格式
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -87,6 +89,9 @@ data_label=[]
 #存放统计数据的选项统计信息
 data_list=[]
 
+#开始下载/停止下载标志位
+download_flag=[]
+download_flag.append(1)
 
 if os.path.exists("statistics.json")==False:
     f=open('statistics.json','w')
@@ -230,13 +235,21 @@ def downloadMessage3(nwin):
     msg.grid(row=2)
     
 #下载管理
-def increment(dwin,download_progress):
-    for i in range(100):
-        download_progress["value"]=i+1
-        dwin.update()
-        time.sleep(0.1)
-        
-def download():
+def download_start(dwin,download_progress,flag):
+     xueqiu = Xueqiuspider()
+     t=threading.Thread(target=xueqiu.run(dwin,download_progress,flag),name='t')
+     t.start()
+
+def download_stop(flag):
+    t=threading.Thread(target=is_download_stop(flag),name='t2')
+    t.start()
+
+def is_download_stop(flag):
+    flag[0]=0
+    print('停止下载')
+    
+def download(flag):
+    strV='SH601318'
     dwin=Tk()
     dwin.title("下载管理")
     dwin.geometry("400x250")
@@ -245,9 +258,9 @@ def download():
     
     label_download.place(x=40,y=10)
     stock_info.place(x=100,y=10)
-    start_download=Button(dwin,text="开始下载",command=lambda:increment(dwin,download_progress))
+    start_download=Button(dwin,text="开始下载",command=lambda:download_start(dwin,download_progress,flag))
     start_download.place(x=50,y=100)
-    stop_download=Button(dwin,text="停止下载",command=lambda:downloadMessage2(dwin))
+    stop_download=Button(dwin,text="停止下载",command=lambda:download_stop(download_flag))
     stop_download.place(x=300,y=100)
     
     download_progress=ttk.Progressbar(dwin,length=200,mode="determinate",orient=HORIZONTAL)
@@ -1256,7 +1269,7 @@ fmenu.add_command(label='保存',command=filesave)
 fmenu.add_command(label='另存为',command=filesaveas)
 
 dmenu=Menu(menubar)
-dmenu.add_command(label='下载',command=download)
+dmenu.add_command(label='下载',command=lambda:download(download_flag))
 dmenu.add_command(label='生成统计图',command=datachart)
 
 dmenu.add_command(label='添加标注')

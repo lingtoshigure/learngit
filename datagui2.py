@@ -60,6 +60,9 @@ else:
 #comment_all存放stock结构体
 comment_all=[]
 
+#存放核查文件数据
+check_comment_diff={}
+
 if os.path.exists('xueqiu_comment.json')==False:
     f=open('xueqiu_comment.json','w')
     f.close()
@@ -134,7 +137,7 @@ else:
     
     
 #文件导入
-def importfile(lb):
+def importfile(lb,root):
     
     global filename
     global is_import_file
@@ -158,6 +161,9 @@ def importfile(lb):
         
         f.close()
         is_import_file=True
+        root_title=str("数据标注软件   当前打开文件  "+str(filename))
+        
+        root.title(root_title)
         
     return filename
         
@@ -329,11 +335,16 @@ def tag_delete(tag_listbox):
 #添加标签名
 #tag_name保存标签名
 def tag_name_confirm(entag,tag_tmp,data_label):
+    tag_flag=0
+    for item in tag_all:
+        if item['tag']==entag.get():
+            tag_flag=1
+            messagebox.showinfo('提示','存在相同标签')
    
-    
-    tag_tmp['tag']=entag.get()
-    data_label['tag']=entag.get()
-    print(tag_tmp['tag'])
+    if tag_flag==0:
+        tag_tmp['tag']=entag.get()
+        data_label['tag']=entag.get()
+        print(tag_tmp['tag'])
     
 
 #确认选项名
@@ -381,7 +392,14 @@ def create_confirm(event,choice_index,tag_tmp,new_label,data_label,tag_all,input
     if 'tag'in tag_tmp and len(tag_tmp)>2:
         tag_tmp['choice']=0
         tag_all.append(copy.deepcopy(tag_tmp))
-        tag_listbox.insert('end',tag_tmp['tag'])
+        new_tag=""
+        for item in tag_tmp:
+            if item=='tag':
+                new_tag=tag_tmp[item]+"  选项: "
+            if item!='tag' and item!='choice':
+                new_tag+=item+"  "
+                
+        tag_listbox.insert('end',new_tag)
         #choice_list.insert('end', tag_tmp['tag'])
         f=open("tag.json","a")
         #确认后将新的标签信息写回到listbox中
@@ -521,8 +539,17 @@ def tag():
     #滚动条动，列表跟着滚动
     main_tag_sc.config(command=tag_listbox.yview)
     
+    #for item in tag_all:
+        #tag_listbox.insert("end",item['tag'])
+    
     for item in tag_all:
-        tag_listbox.insert("end",item['tag'])
+        new_tag=""
+        for it in item:
+            if it=='tag':
+                new_tag=item[it]+"  选项: "
+            if it!='tag' and it!='choice':
+                new_tag+=it+" "
+        tag_listbox.insert("end",new_tag)
         
     menubar=Menu(tag_win)
     
@@ -1306,7 +1333,8 @@ def labeled_comment_saveas(labeled_comment):
          
          comment_new=copy.deepcopy(item)
          comment_new=comment_new.__dict__
-         comment_new=json.dumps(comment_new,ensure_ascii=False)
+         #comment_new=json.dumps(comment_new,ensure_ascii=False)
+         comment_new=json.dump(comment_new,ensure_ascii=False)
          
          #fh.write(str(comment_new))
          fh.write(comment_new)
@@ -1373,13 +1401,22 @@ check_list=[]
 def check_import(check_list):
     check_tmp=[]
     f_check=askopenfilename(defaultextension=".json")
+    #将导入的文件名作为用户的标识
+    file_name=os.path.basename(f_check)
+    split_list=os.path.splitext(file_name)
+    f_check_pre=split_list[-2]
+    #print(f_check_pre)
+    
     logging.info("导入核查文件")
+    
     if(f_check==""):
         f_check=None
     else:
         f=open(f_check,'r')
         for line in f.readlines():
             comment_dict=ast.literal_eval(line)
+            comment_dict['username']=copy.deepcopy(f_check_pre)
+            #print(comment_dict)
             check_tmp.append(comment_dict)
         f.close()
         
@@ -1396,52 +1433,76 @@ def check_import(check_list):
 #存放选择不同的评论下标
 diff_index=[]
 
-def check_diff(check_list,diff_index,check_comment_list):
+#依然以check[0]作为标准找出选择不同的评论，但是不同的是需要将不同的评论用一个额外的list存放
+#不在check[0]上做修改
+#check_choice_diff用来存放选择不同的评论
+def check_diff(check_list,diff_index,check_comment_list,check_comment_diff):
     if len(check_list)<=1:
         messagebox.showinfo('提示','请导入至少2个文件')
     else:
         #遍历导入的所有文件中的数据
-        for i in range(1,len(check_list)):
-           
+        #初始化check_comment_diff
+        for item in check_list[0]:
+            #数据正常读入
+            #print("check_list[0]数据:",item)
+            check_comment_diff[item['comment_text']]=[]
             
+            check_comment_diff[item['comment_text']].append(copy.deepcopy(item))
+           
+        
+        for i in range(1,len(check_list)):
+        
             check_index=min(len(check_list[0]),len(check_list[i]))
             #遍历check_list[0]中的所有评论
             for curr_index in range(0,check_index):
                 #遍历每一个标签的choice
                 #因为有可能删除了评论，对于check_list[0]的每一条评论都要和另一个文件中的所有评论比较，找出相同的评论
                 for other_index in range(0,check_index):
-                    if check_list[0][curr_index]['comment_text']==check_list[0][other_index]['comment_text']:
+                    if check_list[0][curr_index]['comment_text']==check_list[i][other_index]['comment_text']:
                         #遍历所有标签的选择
                           for index_label in range(0,len(check_list[0][curr_index]['label_list'])):
                     
                               if check_list[0][curr_index]['label_list'][index_label]['choice']!=check_list[i][other_index]['label_list'][index_label]['choice']:
+                                  
                                   diff_index.append(curr_index)
                                   check_comment_list.insert("end", check_list[0][curr_index]['comment_text'])
-                                  break;
+                                  check_comment_diff[check_list[0][curr_index]['comment_text']].append(check_list[i][other_index])
+                                  break
+                                  
+                                  
+                                  
+                                  
                 
 
                
         if len(diff_index)==0:
             messagebox.showinfo('提示','检查通过')
             check_list.clear()
+        
+        #显示check_comment_diff
+        #正确读入
+        for item in check_comment_diff:
+            print(check_comment_diff[item])
 
 #核查的下一条数据
 #修改curr_diff_index
 #index当前标签下标
-def check_nxt(check_choice,curr_diff_index,diff_index,check_list,check_comment_text):
+def check_nxt(check_choice,curr_diff_index,diff_index,check_list,check_comment_text,check_comment_diff):
     for widget in check_choice.winfo_children():
         widget.grid_forget()
     
     curr_diff_index[0]+=1
-    if curr_diff_index[0]>len(diff_index):
-        curr_diff_index=len(diff_index)
+    if curr_diff_index[0]>=len(diff_index):
+        curr_diff_index=len(diff_index)-1
         messagebox.showinfo('提示','已是最后一条')
     
     check_comment_text.delete('1.0','end')
-    check_comment_text.insert('end',check_list[0][diff_index[curr_diff_index[0]]]['comment_text'])
+    #check_comment_text.insert('end',check_list[0][diff_index[curr_diff_index[0]]]['comment_text'])
+    show_check_detail(curr_diff_index, diff_index, check_list, check_comment_text,check_comment_diff)
+    
         
 #核查的上一条数据
-def check_pre(check_choice,curr_diff_index,diff_index,check_list,check_comment_text):
+def check_pre(check_choice,curr_diff_index,diff_index,check_list,check_comment_text,check_comment_diff):
     for widget in check_choice.winfo_children():
         widget.grid_forget()
     
@@ -1451,7 +1512,8 @@ def check_pre(check_choice,curr_diff_index,diff_index,check_list,check_comment_t
         messagebox.showinfo('提示','已经是第一条')
     
     check_comment_text.delete('1.0','end')
-    check_comment_text.insert('end',check_list[0][diff_index[curr_diff_index[0]]]['comment_text'])
+    #check_comment_text.insert('end',check_list[0][diff_index[curr_diff_index[0]]]['comment_text'])
+    show_check_detail(curr_diff_index, diff_index, check_list, check_comment_text,check_comment_diff)
     
     
 
@@ -1500,7 +1562,7 @@ def check_label_choice(even,check_choice,check_label_list,check_list,curr_diff_i
             i=i+1
     
  #导出核查后文件
-def check_saveas(check_list,check_comment_list):
+def check_saveas(check_list,check_comment_list,check_comment_diff):
     f=asksaveasfilename(initialfile="未命名.json",defaultextension=".json")
     f_check=open(f,'w')
     for item in check_list[0]:
@@ -1511,16 +1573,49 @@ def check_saveas(check_list,check_comment_list):
     
     #清空核查列表
     check_list.clear()
+    #清空存放不同的评论数据
+    check_comment_diff.clear()
     #清空listbox
     check_comment_list.delete('0','end')
     
     
         
+#显示不同标注者的详细标注信息
+def show_check_detail(curr_diff_index,diff_index,check_list,check_comment_text,check_comment_diff):
+        check_comment_text.insert('end',str(check_list[0][diff_index[curr_diff_index[0]]]['comment_text']))
+        check_comment_text.insert('end','\n')
+    
+        for item in check_comment_diff:
+            if item==check_list[0][diff_index[curr_diff_index[0]]]['comment_text']:
+                check_comment_text.insert('end','\n')
+                for i in range(0,len(check_comment_diff[item])):
+                    check_comment_text.insert('end',str(check_comment_diff[item][i]['username']))
+                    check_comment_text.insert('end','\n')
+                    #check_comment_text.insert('end',str(check_comment_diff[item][i]['label_list']))
+                    label_message=""
+                    choice_message=""
+                    for k in range(0,len(check_comment_diff[item][i]['label_list'])):
+                        for key in check_comment_diff[item][i]['label_list'][k]:
+                            if key=='tag':
+                                label_message="标签名： "+str(check_comment_diff[item][i]['label_list'][k][key])
+                                label_message+="  选项: "
+                            if key!='choice' and key!='tag':
+                                label_message+=key+" "
+                                
+                                if check_comment_diff[item][i]['label_list'][k][key]==check_comment_diff[item][i]['label_list'][k]['choice']:
+                                    choice_message=key
+                        label_message+="选择: "+choice_message
+                        check_comment_text.insert('end',str(label_message))
+                        check_comment_text.insert('end','\n')
+                            
+                    
+                    check_comment_text.insert('end','\n')
+        check_comment_text.insert('end','\n')
     
             
 
 #显示核查后选择不同的数据
-def check_change(even,check_comment_list):
+def check_change(even,check_comment_list,check_comment_diff):
     check_change_win=Toplevel()
     check_change_win.geometry("500x470")
     check_change_win.title('复查')
@@ -1551,6 +1646,33 @@ def check_change(even,check_comment_list):
     if len(diff_index)>0:
        
         check_comment_text.insert('end',str(check_list[0][diff_index[curr_diff_index[0]]]['comment_text']))
+        check_comment_text.insert('end','\n')
+        for item in check_comment_diff:
+            if item==check_list[0][diff_index[curr_diff_index[0]]]['comment_text']:
+                check_comment_text.insert('end','\n')
+                for i in range(0,len(check_comment_diff[item])):
+                    check_comment_text.insert('end',str(check_comment_diff[item][i]['username']))
+                    check_comment_text.insert('end','\n')
+                    #check_comment_text.insert('end',str(check_comment_diff[item][i]['label_list']))
+                    label_message=""
+                    choice_message=""
+                    for k in range(0,len(check_comment_diff[item][i]['label_list'])):
+                        for key in check_comment_diff[item][i]['label_list'][k]:
+                            if key=='tag':
+                                label_message="标签名： "+str(check_comment_diff[item][i]['label_list'][k][key])
+                                label_message+="  选项: "
+                            if key!='choice' and key!='tag':
+                                label_message+=key+" "
+                                
+                                if check_comment_diff[item][i]['label_list'][k][key]==check_comment_diff[item][i]['label_list'][k]['choice']:
+                                    choice_message=key
+                        label_message+="选择: "+choice_message
+                        check_comment_text.insert('end',str(label_message))
+                        check_comment_text.insert('end','\n')
+                            
+                    
+                    check_comment_text.insert('end','\n')
+        check_comment_text.insert('end','\n')
         
     
     #下拉框的标签选项
@@ -1567,10 +1689,10 @@ def check_change(even,check_comment_list):
     #绑定下拉框事件
     check_label_list.bind("<<ComboboxSelected>>",lambda even:check_label_choice(even, check_choice, check_label_list, check_list, curr_diff_index, diff_index))
     
-    pre=Button(check_page,text='上一条',command=lambda:check_pre(check_choice,curr_diff_index,diff_index,check_list,check_comment_text))
+    pre=Button(check_page,text='上一条',command=lambda:check_pre(check_choice,curr_diff_index,diff_index,check_list,check_comment_text,check_comment_diff))
     pre.place(x=5,y=0)
     
-    nxt=Button(check_page,text='下一条',command=lambda:check_nxt(check_choice,curr_diff_index,diff_index,check_list,check_comment_text))
+    nxt=Button(check_page,text='下一条',command=lambda:check_nxt(check_choice,curr_diff_index,diff_index,check_list,check_comment_text,check_comment_diff))
     nxt.place(x=450,y=0)
     
     
@@ -1584,10 +1706,17 @@ def check():
     check_win.geometry("500x400")
     check_win.title('标注核查')
     menubar=Menu(check_win)
+    #存放所有导入文件中选择不同的评论
+    #核查完成后需要清空
+   
+    check_comment_diff.clear()
+    check_list.clear()
     menubar.add_command(label='导入核查文件',command=lambda:check_import(check_list))
-    menubar.add_command(label='核查',command=lambda:check_diff(check_list,diff_index,check_comment_list))
-    menubar.add_command(label='导出文件',command=lambda:check_saveas(check_list,check_comment_list))
+    menubar.add_command(label='核查',command=lambda:check_diff(check_list,diff_index,check_comment_list,check_comment_diff))
+    menubar.add_command(label='导出文件',command=lambda:check_saveas(check_list,check_comment_list,check_comment_diff))
     check_win['menu']=menubar
+    
+    
     
     #listbox显示选择不同的评论,双击评论后可以进行修改
     
@@ -1602,7 +1731,7 @@ def check():
     check_scroll.config(command=check_comment_list.yview)
     
     #双击显示评论
-    check_comment_list.bind("<Double-Button-1>",lambda even: check_change(even,check_comment_list))
+    check_comment_list.bind("<Double-Button-1>",lambda even: check_change(even,check_comment_list,check_comment_diff))
     
     check_win=mainloop()
            
@@ -1612,7 +1741,7 @@ root.geometry("800x450")
 menubar=Menu(root)
 
 fmenu=Menu(menubar)
-fmenu.add_command(label='导入下载数据',command=lambda:importfile(comment_list))
+fmenu.add_command(label='导入下载数据',command=lambda:importfile(comment_list,root))
 fmenu.add_command(label="导出标注评论数据",command=lambda:labeled_comment_saveas(labeled_comment))
 fmenu.add_command(label="导出统计图数据",command=lambda:statistics_saveas(data_list))
 

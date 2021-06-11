@@ -8,6 +8,7 @@ from tkinter import*
 from tkinter import ttk
 from tkinter.filedialog import*
 import tkinter
+
 from tkinter.messagebox import askokcancel,showinfo,WARNING
 import ast
 import logging
@@ -187,7 +188,7 @@ def is_stock_correct(stock_num,dwin,download_progress,flag):
     if (len(stock_num)==8 and (re.match('SH600*', stock_num)!=None or re.match('SH601*', stock_num)!=None or re.match('SH603*', stock_num)!=None or re.match('SH605*', stock_num)!=None or re.match('SH688*', stock_num)!=None or re.match('SZ000*', stock_num)!=None or re.match('SZ001*', stock_num)!=None or re.match('SZ002*', stock_num)!=None or re.match('SZ300*', stock_num)!=None)):
         download_start(stock_num,dwin,download_progress,flag)
     else:
-        messagebox.showinfo('提示','股票代码格式错误')
+        tkinter.messagebox.showinfo('提示','股票代码格式错误')
        
         
         
@@ -339,7 +340,7 @@ def tag_name_confirm(entag,tag_tmp,data_label):
     for item in tag_all:
         if item['tag']==entag.get():
             tag_flag=1
-            messagebox.showinfo('提示','存在相同标签')
+            tkinter.messagebox.showinfo('提示','存在相同标签')
    
     if tag_flag==0:
         tag_tmp['tag']=entag.get()
@@ -426,7 +427,7 @@ def create_confirm(event,choice_index,tag_tmp,new_label,data_label,tag_all,input
             f.write('\n')
         f.close()
    
-        messagebox.showinfo('提示','创建成功')
+        tkinter.messagebox.showinfo('提示','创建成功')
     
         #清空标签输入界面和显示选项的listbox
         input_tag.delete(0,END)
@@ -437,7 +438,7 @@ def create_confirm(event,choice_index,tag_tmp,new_label,data_label,tag_all,input
         
         choice_index[0]=1
     else:
-        messagebox.showinfo('提示','标签名/选项不能为空')
+        tkinter.messagebox.showinfo('提示','标签名/选项不能为空')
         input_tag.delete(0,END)
         choice_list.delete(0,END)
        
@@ -573,7 +574,7 @@ def pre_comment(even,text):
    
     if comment_detail_index<0:
         comment_detail_index=0
-        messagebox.showinfo('提示','已经是第一条评论了')
+        tkinter.messagebox.showinfo('提示','已经是第一条评论了')
     #清空text原有内容
     text.delete('1.0','end')
     #读入新的内容
@@ -588,7 +589,7 @@ def nex_comment(even,text):
     
     if comment_detail_index>=len(comment):
        comment_detail_index=len(comment)-1;
-       messagebox.showinfo('提示','已经是最后一条评论了')
+       tkinter.messagebox.showinfo('提示','已经是最后一条评论了')
     text.delete('1.0','end')
     text.insert('end',comment[comment_detail_index])
 
@@ -727,7 +728,7 @@ def pre_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,text)
     print("评论下标",unlabeled_index[0])
     if unlabeled_index[0]<0:
         unlabeled_index[0]=0
-        messagebox.showinfo('提示','已经是第一条评论了')
+        tkinter.messagebox.showinfo('提示','已经是第一条评论了')
     text.delete('1.0','end')
     text.insert('end',unlabeled_comment_list[unlabeled_index[0]].comment_text)
         
@@ -744,7 +745,7 @@ def nxt_unlabeled_comment(fm_choice,unlabeled_index,unlabeled_comment_list,text)
     print("评论下标:",unlabeled_index[0])
     if unlabeled_index[0]>=len(unlabeled_comment_list):
         unlabeled_index[0]=len(unlabeled_comment_list)-1
-        messagebox.showinfo('提示','已经是最后一条评论了')
+        tkinter.messagebox.showinfo('提示','已经是最后一条评论了')
     
     text.delete('1.0','end')
     text.insert('end',unlabeled_comment_list[unlabeled_index[0]].comment_text)
@@ -927,6 +928,20 @@ def unlabeled_comment(comment_list):
     #从comment_all中选出tag=0的评论
     #问题读入的长度为空
     #这个可以放到外面，程序运行时就读取
+    #更新一次comment_all
+    comment_all.clear()
+    f=open('xueqiu_comment.json','r')
+    for line in f.readlines():
+        comment_dict=ast.literal_eval(line)
+    
+        tmp=stock()
+        tmp.comment_text=comment_dict['comment_text']
+        for item in tag_all:
+            tmp.label_list.append(item)
+        tmp.tag=comment_dict['tag']
+        comment_all.append(tmp)
+    f.close()
+    
     unlabeled_comment_list=[]
     for item in comment_all:
         if item.tag=='0':
@@ -993,7 +1008,7 @@ def labeled_nxt_comment(fm_choice,labeled_index,labeled_comment,labeled_comment_
     labeled_index[0]=labeled_index[0]+1
     if labeled_index[0]>=len(labeled_comment):
         labeled_index[0]=len(labeled_comment)-1
-        messagebox.showinfo('提示','已经是最后一条评论了')
+        tkinter.messagebox.showinfo('提示','已经是最后一条评论了')
     
     labeled_comment_text.delete('1.0','end')
     labeled_comment_text.insert('end',labeled_comment[labeled_index[0]].comment_text)
@@ -1023,7 +1038,7 @@ def labeled_pre_comment(fm_choice,labeled_index,labeled_comment,labeled_comment_
     labeled_index[0]=labeled_index[0]-1
     if labeled_index[0]<0:
         labeled_index[0]=0
-        messagebox.showinfo('提示','已经是第一条评论了')
+        tkinter.messagebox.showinfo('提示','已经是第一条评论了')
     
     labeled_comment_text.delete('1.0','end')
     labeled_comment_text.insert('end',labeled_comment[labeled_index[0]].comment_text)
@@ -1334,7 +1349,7 @@ def labeled_comment_saveas(labeled_comment):
          comment_new=copy.deepcopy(item)
          comment_new=comment_new.__dict__
          #comment_new=json.dumps(comment_new,ensure_ascii=False)
-         comment_new=json.dump(comment_new,ensure_ascii=False)
+         comment_new=json.dumps(comment_new,ensure_ascii=False)
          
          #fh.write(str(comment_new))
          fh.write(comment_new)
@@ -1343,6 +1358,19 @@ def labeled_comment_saveas(labeled_comment):
     fh.close()
     
     
+    #导出后tag没有正常清0
+    comment_all.clear()
+    f=open('xueqiu_comment.json','r')
+    for line in f.readlines():
+        comment_dict=ast.literal_eval(line)
+    
+        tmp=stock()
+        tmp.comment_text=comment_dict['comment_text']
+        for item in tag_all:
+            tmp.label_list.append(item)
+        tmp.tag=comment_dict['tag']
+        comment_all.append(tmp)
+    f.close()
     
     fh_xueqiu=open('xueqiu_comment.json',"w")
     for item in comment_all:
@@ -1438,7 +1466,7 @@ diff_index=[]
 #check_choice_diff用来存放选择不同的评论
 def check_diff(check_list,diff_index,check_comment_list,check_comment_diff):
     if len(check_list)<=1:
-        messagebox.showinfo('提示','请导入至少2个文件')
+        tkinter.messagebox.showinfo('提示','请导入至少2个文件')
     else:
         #遍历导入的所有文件中的数据
         #初始化check_comment_diff
@@ -1476,7 +1504,7 @@ def check_diff(check_list,diff_index,check_comment_list,check_comment_diff):
 
                
         if len(diff_index)==0:
-            messagebox.showinfo('提示','检查通过')
+            tkinter.messagebox.showinfo('提示','检查通过')
             check_list.clear()
         
         #显示check_comment_diff
@@ -1494,7 +1522,7 @@ def check_nxt(check_choice,curr_diff_index,diff_index,check_list,check_comment_t
     curr_diff_index[0]+=1
     if curr_diff_index[0]>=len(diff_index):
         curr_diff_index=len(diff_index)-1
-        messagebox.showinfo('提示','已是最后一条')
+        tkinter.messagebox.showinfo('提示','已是最后一条')
     
     check_comment_text.delete('1.0','end')
     #check_comment_text.insert('end',check_list[0][diff_index[curr_diff_index[0]]]['comment_text'])
@@ -1509,7 +1537,7 @@ def check_pre(check_choice,curr_diff_index,diff_index,check_list,check_comment_t
     curr_diff_index[0]-=1
     if curr_diff_index[0]<0:
         curr_diff_index=0
-        messagebox.showinfo('提示','已经是第一条')
+        tkinter.messagebox.showinfo('提示','已经是第一条')
     
     check_comment_text.delete('1.0','end')
     #check_comment_text.insert('end',check_list[0][diff_index[curr_diff_index[0]]]['comment_text'])
@@ -1564,10 +1592,17 @@ def check_label_choice(even,check_choice,check_label_list,check_list,curr_diff_i
  #导出核查后文件
 def check_saveas(check_list,check_comment_list,check_comment_diff):
     f=asksaveasfilename(initialfile="未命名.json",defaultextension=".json")
+    
+    #去除用户名
     f_check=open(f,'w')
     for item in check_list[0]:
-        item=json.dumps(item,ensure_ascii=False)
-        f_check.write(item)
+        it_tmp={}
+        for it in item:
+            if it!='username':
+                it_tmp[it]=item[it]
+                
+        it_tmp=json.dumps(it_tmp,ensure_ascii=False)
+        f_check.write(it_tmp)
         f_check.write('\n')
     f_check.close()
     
